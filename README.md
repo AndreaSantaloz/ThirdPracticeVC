@@ -12,6 +12,8 @@ pip install scikit-learn seaborn
 
 ## Detector de Monedas
 
+Con la función HoughCircles se detectan las monedas.
+
 ## Detector de Microplasticos
 
 ## Tecnologías
