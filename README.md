@@ -182,6 +182,15 @@ for item in images_data:
     # Usar el nuevo modelo Random Forest
     predict_and_draw_contours(item["path"], rf_model, X.columns)
 ```
+![Matriz confusión](./MicroplasticImages/MatrizConfusion.png)
+
+![One image](./MicroplasticImages/OneImage.png)
+
+![Second image](./MicroplasticImages/SecondImage.png)
+
+![Third image](./MicroplasticImages/ThirdImage.png)
+
+
 ## Tecnologías
 1. Python
 2. Matplotlib
