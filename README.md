@@ -78,7 +78,7 @@ def process_image_for_training(image_path, true_label_code):
 
     print(f"Procesado (Entrenamiento): {image_path}. Muestras añadidas: {len([c for c in contours if cv2.contourArea(c) > 50])}")
 ```
-Finalmente preparamos los datos para el Dataframe utilizando la libreria pandas y separamos los datos para entrenamiento y test donde luego los entrenamos y luego realizamos una predicción ,además que mostramos la matriz de confusión  y las tres imagenes rodeando cada microplastico clasificado en función de los colores puestos para cada microplástico.
+Quinto preparamos los datos para el Dataframe utilizando la libreria pandas y separamos los datos para entrenamiento y test donde luego los entrenamos y luego realizamos una predicción  y realizamos la matriz de confusión y la mostramos.
 ```
 
 # --- 3. Ejecutar Extracción y Entrenamiento ---
@@ -113,7 +113,11 @@ plt.ylabel('Etiqueta Verdadera')
 plt.title('Matriz de Confusión del Clasificador Random Forest')
 plt.show()
 # ----------------------------
-
+```
+![Matriz confusión](./MicroplasticImages/MatrizConfusion.png)
+Finalmente realizamos la función de predicción y dibujamos aproximadamente circulos rodeando el microplástico predecido y mostramos 
+las tres imagenes.
+```
 # --- 4. Función de Predicción y Dibujo (Contorno Individual) ---
 def predict_and_draw_contours(image_path, classifier, features_cols):
     """Carga, segmenta, predice la clase de CADA contorno y lo dibuja."""
@@ -182,7 +186,6 @@ for item in images_data:
     # Usar el nuevo modelo Random Forest
     predict_and_draw_contours(item["path"], rf_model, X.columns)
 ```
-![Matriz confusión](./MicroplasticImages/MatrizConfusion.png)
 
 ![One image](./MicroplasticImages/OneImage.png)
 
