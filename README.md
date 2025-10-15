@@ -10,9 +10,82 @@ En las otras prácticas ya se tenían instalados Python, NumPy y Matplotlib, per
 pip install scikit-learn seaborn
 ```
 
-## Detector de Monedas
+## Clasificador de Monedas
 
-Con la función HoughCircles se detectan las monedas.
+El script está diseñado para detectar, clasificar y sumar el valor de monedas de euro a partir de una imagen utilizando la librería OpenCV. Su precisión depende de una calibración manual que establece la relación entre píxeles y milímetros.
+
+1. Preparación y Detección Inicial:
+El script comienza definiendo los diámetros reales y los valores monetarios de todas las monedas de euro. La función principal, calcular_precio_moneda, carga la imagen, la convierte a escala de grises y aplica un filtro de mediana (cv2.medianBlur) para reducir el ruido. Luego, utiliza la Transformada de Hough para Círculos (cv2.HoughCircles) para identificar todas las monedas, devolviendo sus coordenadas de centro (x,y) y su radio (r) en píxeles.
+
+2. Calibración Interactiva:
+Esta es la fase de escalado crucial. El script solicita al usuario que haga click en la moneda de 1 euro para usarla como referencia. Una función anidada (evento_click) captura este click, identifica el círculo detectado más cercano y almacena su radio en píxeles (rref​). Con este dato, se calcula el factor de conversión de píxeles a milímetros (Factormm/pıˊxel​) dividiendo el diámetro real del 1 euro (23.25 mm) por el diámetro detectado (2×rref​).
+
+3. Corrección de Sesgo y Ajuste de Rangos:
+Para compensar la distorsión de la cámara (como la inclinación o la perspectiva), el script calcula la diferencia relativa (un porcentaje de error) entre el diámetro real del 1 euro y el diámetro que se acaba de detectar. A continuación, aplica esta misma corrección porcentual para ajustar dinámicamente los rangos de diámetro ideales de todas las demás monedas. Esto asegura que la clasificación se mantenga precisa aunque la imagen esté ligeramente distorsionada.
+
+4. Clasificación Final y Resultado: El script recorre todos los círculos detectados, calcula el diámetro estimado en mm para cada uno (2×r×Factorescala/píxel​) y lo compara con los rangos ajustados para determinar su tipo (e.g., '2_euros', '50_centimos'). Finalmente, suma el valor de todas las monedas al total_dinero, dibuja un círculo verde y una etiqueta sobre cada moneda en la imagen, y muestra el resultado final en la consola.
+
+En este fragmento de código usando el algoritmo de Hough detectamos todos los objetos circulares de la escena 
+```
+circulos_detectados = cv2.HoughCircles(pimg, cv2.HOUGH_GRADIENT, 1, 100,
+                                       param1=100, param2=50, minRadius=50, maxRadius=150)
+```
+La siguiente función es un evento para que cuando toque la moneda de 1 euro esta te devuelva los demás valores de las otras monedas.
+
+```
+def evento_click(event, x, y, flags, userdata):
+    # ...
+    if event == cv2.EVENT_LBUTTONDOWN:
+        # ...
+        for cx, cy, r in circulos.astype(float):
+            dist = np.sqrt((x - cx)**2 + (y - cy)**2)
+            if dist < distancia_minima:
+                distancia_minima, circulo_ref = dist, (cx, cy, r)
+        if circulo_ref is not None:
+            punto_referencia_1_euro["radio"] = circulo_ref[2]
+            # ...
+            cv2.destroyWindow("Selecciona moneda de 1 euro")
+```
+En este fragmento de código calculamos las mediciones en píxeles a mm y ajusta los errores.
+```
+# Cálculo del factor mm/píxel
+radio_ref = punto_referencia_1_euro["radio"]
+diametro_1_euro_mm = monedas_dimensiones['1_euro']
+factor_mm_por_pixel = diametro_1_euro_mm / (2 * radio_ref)
+
+# Cálculo de la diferencia relativa (sesgo)
+diametro_detectado_1_euro = 2 * radio_ref * factor_mm_por_pixel
+diferencia_relativa = (diametro_detectado_1_euro - diametro_1_euro_mm) / diametro_1_euro_mm
+
+# Ajuste de rangos
+for nombre, (min_d, max_d) in rangos_base.items():
+    # ...
+    min_corr = min_d * (1 + diferencia_relativa)
+    max_corr = max_d * (1 + diferencia_relativa)
+    rangos_ajustados[nombre] = (min_corr, max_corr)
+```
+Y otro fragmento relevante es como clasifica y el procedimiento es así cada radio detectado (r) se multiplica por 2 y por el factor_mm_por_pixel para obtener el diámetro real estimado (diametro_mm).
+El script compara este diaˊmetro estimado con los rangos ajustados (rangos_ajustados) en un bucle simple. La primera coincidencia (if min_d <= diametro_mm <= max_d:) determina el moneda_tipo.
+El valor monetario correspondiente se suma al total_dinero.
+```
+for (x, y, r) in circulos_ordenados:
+    diametro_mm = 2 * r * factor_mm_por_pixel
+    moneda_tipo = "desconocida"
+    for nombre, (min_d, max_d) in rangos_ajustados.items():
+        if min_d <= diametro_mm <= max_d:
+            moneda_tipo = nombre
+            break
+    # ... suma el valor y anota en la imagen
+```
+Aquí se proporciona imagenes relevantes de como ha funcionado en algunos casos.
+
+<br>
+
+![ImagenFinalMonedas](./CoinsImages/ImagenFinalMonedas.png)
+
+<br>
+
+![Prueba2Final](./CoinsImages/Prueba2Final.png)
 
 ## Detector  de Microplásticos
 El segundo ejercicio se trata de crear un clasificador de microplásticos de los siguientes tipos: fragmento, pellet y alquitrán.
@@ -143,12 +216,19 @@ plt.show()
 for item in images_data:
     process_contours(item["path"],"",False)
 ```
+<br>
 
 ![Matriz confusión](./MicroplasticImages/MatrizConfusion.png)
 
+<br>
+
 ![One image](./MicroplasticImages/OneImage.png)
 
+<br>
+
 ![Second image](./MicroplasticImages/SecondImage.png)
+
+<br>
 
 ![Third image](./MicroplasticImages/ThirdImage.png)
 
@@ -161,3 +241,7 @@ for item in images_data:
 5. Scikit-learn
 6. Pandas
 
+## Recursos
+1. [Random Forest]( https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
+2. [DataFrame ](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
+3. 
