@@ -1,11 +1,11 @@
-# VC - PRACTICA 3
+# VC - PRÁCTICA 3
 ## Autores del proyecto 
 1. Luis Martín Pérez
 2. Andrea Santana López
 ## Introdución
-Se basa en la realización de dos actividades donde la primera actividad consiste en un detector de monedas y la otra actividad es un detector de Microplásticos.
+Se basa en la realización de dos actividades, donde la primera consiste en un clasificador de monedas y la otra actividad es un clasificador de microplásticos.
 ## Aspectos a tener en cuenta 
-Para las otras práticas ya se tenía instalado python,numpy y matplotlib ,pero ahora hay que instalar searborn y scikit-learn
+En las otras prácticas ya se tenían instalados Python, NumPy y Matplotlib, pero ahora hay que instalar Seaborn y Scikit-learn:
 ```
 pip install scikit-learn seaborn
 ```
@@ -15,18 +15,17 @@ pip install scikit-learn seaborn
 Con la función HoughCircles se detectan las monedas.
 
 ## Detector  de Microplásticos
-El segundo ejercicio se trata de hacer un clasificador de Microplásticos de los siguientes tipos: fragmento,pellet y alquitrán.Es por eso que tras investigar sobre posibles algoritmos de clasifica
-ción se selecciono Random Forest por su capacidad para clasificar los Microplásticos.
+El segundo ejercicio se trata de crear un clasificador de microplásticos de los siguientes tipos: fragmento, pellet y alquitrán.
+Por ello, tras investigar sobre posibles algoritmos de clasificación, se seleccionó Random Forest por su capacidad para clasificar los microplásticos.
 
-Primero se inicializó las variables para obtener las características geometricas escogidas que son:
-área y perímetro y para las etiquetas.
+Primero, se inicializaron las variables para obtener las características geométricas escogidas, que son: área y perímetro, además de las etiquetas.
 ```
 features_list = [] 
 labels_list = []
 label_map = {"FRA": 0, "PEL": 1, "TAR": 2}
 reverse_label_map = {v: k for k, v in label_map.items()}
 ```
-Segundo declaramos las rutas de nuestros ficheros usados para clasificar.
+Segundo, declaramos las rutas de los ficheros usados para clasificar.
 ```
 images_data = [
     {"path": "./MicroplasticImages/pellet-03-olympus-10-01-2020.jpg", "label": "PEL"},
@@ -35,7 +34,7 @@ images_data = [
 ]
 
 ```
-Tercero, asignamos colores al tipo de microplasticos
+Tercero, asignamos colores al tipo de microplásticos.
 ```
 color_map_bgr = {
     0: (0, 0, 255),    # FRA (Rojo)
@@ -43,7 +42,12 @@ color_map_bgr = {
     2: (0, 255, 0)     # TAR (Verde)
 }
 ```
-Cuarto creamos una función para procesar los contornos de los microplasticos de la imagen donde primero declaramos la imagen de tipo BGR y comprobamos que existe,luego la pasamos a escala de grises y le quitamos el ruido,después umbralizamos la imagen usando un umbral adaptativo Gaussiano.Luego encontramos los contornos y vamos iterando sobre ellos con un bucle donde calculamos el área y comprobamos si es mayor de 50 px  si lo es pues hallamos el perimetro  y si esta obteniendo las caracteristica para entrenar pues las almacena sino lo esta haciendo sino para predecir pues predice con los datos que tiene y los dibuja en circulos de color en función del tipo de microplastico y saca las tres imagenes.          
+Cuarto, creamos una función para procesar los contornos de los microplásticos de la imagen.
+Primero, cargamos la imagen en formato BGR y comprobamos que exista. Luego la pasamos a escala de grises y eliminamos el ruido.
+Después, umbralizamos la imagen usando un umbral adaptativo gaussiano.
+Posteriormente, encontramos los contornos y vamos iterando sobre ellos con un bucle donde calculamos el área y comprobamos si es mayor de 50 píxeles.
+Si lo es, hallamos el perímetro.
+Si se están obteniendo las características para entrenar, se almacenan; si no, se usan para predecir con los datos que tiene, dibujando círculos de color en función del tipo de microplástico y mostrando las tres imágenes.        
 ```
 def process_contours(image_path,microplastic_label,is_training):
       #Comprobamos que la imagen existe
@@ -82,8 +86,8 @@ def process_contours(image_path,microplastic_label,is_training):
            plt.imshow(cv2.cvtColor(img_with_predictions, cv2.COLOR_BGR2RGB))
            plt.show()
 ```
-Aquí esta la función que predice y dibuja los circulos donde cargamos los datos para la predicción ,predecimos la clase con el clasificador y usamos la funcion drawContours para dibujarla
-en función de la clase del microplastico
+Aquí está la función que predice y dibuja los círculos.
+Cargamos los datos para la predicción, predecimos la clase con el clasificador y usamos la función drawContours para dibujarla en función del tipo de microplástico.
 ```
 def predict_and_draw_contours(params, classifier, features_cols,contour, img_with_predictions):
       # Crear el dato para la predicción
@@ -98,15 +102,14 @@ def predict_and_draw_contours(params, classifier, features_cols,contour, img_wit
     cv2.drawContours(img_with_predictions, [contour], -1, color, 3)
       
 ```
-Aquí esta la función que almacena los datos para el entrenamiento donde almacena los valores en feautures_list y label_list
+Aquí está la función que almacena los datos para el entrenamiento, donde se guardan los valores en features_list y labels_list.
 ```
 def process_data_training(params, microplastic_label):
     #Añadir los datos para el entrenamiento
     features_list.append(params)
     labels_list.append(microplastic_label) 
 ```
-Por último aquí esta la parte donde se entrena con el algoritmo Random Forest,se hace la matriz de confusión con los datos testeados y predecidos y se muestra yanto la matriz de confusión como
-las tres imagenes usando los bucles que iteran sobre las tres imagenes para testear y predecir los tipos de microplástico.
+Por último, aquí está la parte donde se entrena con el algoritmo Random Forest, se genera la matriz de confusión con los datos testeados y predichos, y se muestra tanto la matriz como las tres imágenes usando los bucles que iteran sobre las imágenes para testear y predecir los tipos de microplástico.
 
 ```
 
