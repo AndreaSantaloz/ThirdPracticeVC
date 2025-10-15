@@ -243,5 +243,5 @@ for item in images_data:
 
 ## Recursos
 1. [Random Forest]( https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
-2. [DataFrame ](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
-3. 
+2. [DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
+3. [FindContours and DrawContours](https://www.youtube.com/watch?v=FczN93nT-dQ)
