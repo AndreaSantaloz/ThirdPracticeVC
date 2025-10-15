@@ -87,7 +87,7 @@ Aquí se proporciona imagenes relevantes de como ha funcionado en algunos casos.
 
 ![Prueba2Final](./CoinsImages/Prueba2Final.png)
 
-## Detector  de Microplásticos
+## Clasificador  de Microplásticos
 El segundo ejercicio se trata de crear un clasificador de microplásticos de los siguientes tipos: fragmento, pellet y alquitrán.
 Por ello, tras investigar sobre posibles algoritmos de clasificación, se seleccionó Random Forest por su capacidad para clasificar los microplásticos.
 
