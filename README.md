@@ -90,7 +90,7 @@ def calculate_coin_amounts(coin_circles, selected_coin_radius):
 El segundo ejercicio se trata de crear un clasificador de microplásticos de los siguientes tipos: fragmento, pellet y alquitrán.
 Por ello, tras investigar sobre posibles algoritmos de clasificación, se seleccionó Random Forest por su capacidad para clasificar los microplásticos.
 
-Primero, se inicializaron las variables para obtener las características geométricas escogidas, que son: área y perímetro, además de las etiquetas.
+Primero, se inicializaron las variables para obtener las características geométricas escogidas, que son: área y perímetro y color además de las etiquetas.
 ```python
 features_list = [] 
 labels_list = []
@@ -99,10 +99,15 @@ reverse_label_map = {v: k for k, v in label_map.items()}
 ```
 Segundo, declaramos las rutas de los ficheros usados para clasificar.
 ```python
+BASE_DIR = Path(__file__).parent if '__file__' in locals() else Path('.')
+IMAGE_FOLDER = BASE_DIR / "MicroplasticImages"
+
+# Lista de imágenes a procesar con su etiqueta real
 images_data = [
-    {"path": "./MicroplasticImages/pellet-03-olympus-10-01-2020.jpg", "label": "PEL"},
-    {"path": "./MicroplasticImages/fragment-03-olympus-10-01-2020.jpg", "label": "FRA"},
-    {"path": "./MicroplasticImages/tar-03-olympus-10-01-2020.jpg", "label": "TAR"},
+    # Usamos el operador / de pathlib para unir la ruta de forma segura
+    {"path": IMAGE_FOLDER / "pellet-03-olympus-10-01-2020.jpg", "label": "PEL"},
+    {"path": IMAGE_FOLDER / "fragment-03-olympus-10-01-2020.jpg", "label": "FRA"},
+    {"path": IMAGE_FOLDER / "tar-03-olympus-10-01-2020.jpg", "label": "TAR"},
 ]
 
 ```
@@ -119,44 +124,53 @@ Primero, cargamos la imagen en formato BGR y comprobamos que exista. Luego la pa
 Después, umbralizamos la imagen usando un umbral adaptativo gaussiano.
 Posteriormente, encontramos los contornos y vamos iterando sobre ellos con un bucle donde calculamos el área y comprobamos si es mayor de 50 píxeles.
 Si lo es, hallamos el perímetro.
-Si se están obteniendo las características para entrenar, se almacenan; si no, se usan para predecir con los datos que tiene, dibujando círculos de color en función del tipo de microplástico y mostrando las tres imágenes.        
+Si se están obteniendo las características para entrenar que son Area,Color y Perimetro, se almacenan; si no, se usan para predecir con los datos que tiene, dibujando círculos de color en función del tipo de microplástico y mostrando las tres imágenes.        
 ```python
-def process_contours(image_path,microplastic_label,is_training):
-      #Comprobamos que la imagen existe
-      img_bgr = cv2.imread(image_path)
-      img_with_predictions = img_bgr.copy()
-      if img_bgr is None:
+def process_contours(image_path, microplastic_label, is_training):
+    img_bgr = cv2.imread(image_path)
+    img_with_predictions = img_bgr.copy()
+
+    if img_bgr is None:
         print(f"Error: No se pudo cargar la imagen en {image_path}")
         return
-      # Preprocesamiento: Escala de grises y desenfoque
-      img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-      img_blur = cv2.GaussianBlur(img_gray, (5, 5), 0)
-      # Umbral Adaptativo Gaussiano
-      thresh = cv2.adaptiveThreshold(img_blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                   cv2.THRESH_BINARY_INV, 21, 5) 
-      # Encontrar contornos: clave para objetos individuales
-      contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-      for contour in contours:
+
+    img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+    img_blur = cv2.GaussianBlur(img_gray, (5, 5), 0)
+
+    thresh = cv2.adaptiveThreshold(img_blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                   cv2.THRESH_BINARY_INV, 21, 5)
+
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for contour in contours:
         area = cv2.contourArea(contour)
-        # Filtro de área mínima
         if area > 50:
             perimeter = cv2.arcLength(contour, True)
-            
+
+            # ===  Cálculo del color medio del objeto detectado ===
+            mask = np.zeros(img_gray.shape, np.uint8)
+            cv2.drawContours(mask, [contour], -1, 255, -1)
+            mean_val = cv2.mean(img_bgr, mask=mask)  # (B, G, R, _)
+            color_mean = np.mean(mean_val[:3])  # Promedio de los 3 canales
+
+            params = [area, perimeter, color_mean]  # Añadimos color a las features
+
             if not is_training:
                 predict_and_draw_contours(
-                    [area, perimeter], 
-                    rf_model, 
+                    params,
+                    rf_model,
                     X.columns,
-                    contour,         
-                    img_with_predictions 
+                    contour,
+                    img_with_predictions
                 )
             else:
-               process_data_training([area,perimeter], microplastic_label)
-      if not is_training:
-           plt.figure(figsize=(10, 5))
-           plt.title(f"Clasificación Visual Individual ")
-           plt.imshow(cv2.cvtColor(img_with_predictions, cv2.COLOR_BGR2RGB))
-           plt.show()
+                process_data_training(params, microplastic_label)
+
+    if not is_training:
+        plt.figure(figsize=(10, 5))
+        plt.title(f"Clasificación Visual Individual")
+        plt.imshow(cv2.cvtColor(img_with_predictions, cv2.COLOR_BGR2RGB))
+        plt.show()
 ```
 Aquí está la función que predice y dibuja los círculos.
 Cargamos los datos para la predicción, predecimos la clase con el clasificador y usamos la función drawContours para dibujarla en función del tipo de microplástico.
@@ -188,7 +202,7 @@ for item in images_data:
     process_contours(item["path"], label_map[item["label"]],True)
 
 # Preparación de Datos y Entrenamiento
-X = pd.DataFrame(features_list, columns=['Area', 'Perimetro'])
+X = pd.DataFrame(features_list, columns=['Area', 'Perimetro', 'ColorMean'])
 y = pd.Series(labels_list)
 print(f"\nTotal de muestras extraídas: {len(X)}")
 # División y Entrenamiento
@@ -216,20 +230,21 @@ for item in images_data:
 ```
 <br>
 
-![Matriz confusión](./MicroplasticImages/MatrizConfusion.png)
+![Matriz confusión](./MicroplasticImages/MatrizConfusion2.png)
 
 <br>
 
-![One image](./MicroplasticImages/OneImage.png)
+![One image](./MicroplasticImages/image1.png)
 
 <br>
 
-![Second image](./MicroplasticImages/SecondImage.png)
+![Second image](./MicroplasticImages/image2.png)
 
 <br>
 
-![Third image](./MicroplasticImages/ThirdImage.png)
-
+![Third image](./MicroplasticImages/image3.png)
+<br>
+![Resultados](./MicroplasticImages/Resultados.png)
 
 ## Tecnologías
 1. Python
@@ -238,6 +253,7 @@ for item in images_data:
 4. Searborn
 5. Scikit-learn
 6. Pandas
+7. Path
 
 ## Recursos
 1. [Random Forest]( https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
