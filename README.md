@@ -90,7 +90,7 @@ def calculate_coin_amounts(coin_circles, selected_coin_radius):
 El segundo ejercicio se trata de crear un clasificador de microplásticos de los siguientes tipos: fragmento, pellet y alquitrán.
 Por ello, tras investigar sobre posibles algoritmos de clasificación, se seleccionó Random Forest por su capacidad para clasificar los microplásticos.
 
-Primero, se inicializaron las variables para obtener las características geométricas escogidas, que son: área y perímetro, además de las etiquetas.
+Primero, se inicializaron las variables para obtener las características geométricas escogidas, que son: área y perímetro y color además de las etiquetas.
 ```python
 features_list = [] 
 labels_list = []
