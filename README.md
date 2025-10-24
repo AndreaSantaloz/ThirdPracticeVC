@@ -243,7 +243,8 @@ for item in images_data:
 <br>
 
 ![Third image](./MicroplasticImages/image3.png)
-
+<br>
+![Resultados](./MicroplasticImages/Resultados.png)
 
 ## Tecnologías
 1. Python
